@@ -1,0 +1,43 @@
+{
+  "name": "skola-by-dmi/omnipay-adyen",
+  "description": "Adyen driver for the Omnipay payment processing library",
+  "keywords": [
+    "omnipay",
+    "adyen"
+  ],
+  "homepage": "https://github.com/skola-by-dmi/omnipay-adyen",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "descubraomundo",
+      "email": "geeks@descubraomundo.com",
+      "homepage": "https://www.descubraomundo.com"
+    }
+  ],
+  "require": {
+    "omnipay/common": "^3.0",
+      "ext-json": "*"
+  },
+  "require-dev": {
+    "omnipay/tests": "~3.0",
+    "squizlabs/php_codesniffer": "^3",
+    "phpro/grumphp": "^0.14"
+  },
+  "autoload": {
+    "psr-4": {
+      "Omnipay\\Adyen\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "League\\Adyen\\Test\\": "tests"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "check-style": "phpcs -p --standard=PSR2 src/",
+    "fix-style": "phpcbf -p --standard=PSR2 src/"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
