@@ -36,7 +36,6 @@ abstract class AbstractRequest extends BaseAbstractRequest
         return $this->setParameter('key', $value);
     }
 
-
     /**
      * Get the endpoint where the request should be made.
      *
@@ -219,8 +218,8 @@ abstract class AbstractRequest extends BaseAbstractRequest
      */
     public function getDefaultParameters()
     {
-        $data                    = array();
-        $data['integration_key'] = $this->getIntegrationKey();
+        $data                    = [];
+        $data['merchantAccount'] = $this->getMerchantAccount();
 
         return $data;
     }
@@ -358,29 +357,28 @@ abstract class AbstractRequest extends BaseAbstractRequest
      */
     public function getPaymentData($aditionalPaymentData = [])
     {
-        $this->validate('merchantAccount', 'transactionId');
+        $this->validate('transactionId');
 
-        $customerData = $this->getCustomerData();
-        $addressData  = $this->getAddressData();
-        $splitData    = $this->getSplitData();
+        $defaultParams = $this->getDefaultParameters();
+        $customerData  = $this->getCustomerData();
+        $addressData   = $this->getAddressData();
+        $splitData     = $this->getSplitData();
 
-        $paymentData                          = [];
-        $paymentData['reference']             = $this->getTransactionId();
-        $paymentData['merchantAccount']       = $this->getMerchantAccount();
+        $paymentData              = [];
+        $paymentData['reference'] = $this->getTransactionId();
 
         if ($notifyUrl = $this->getNotifyUrl()) {
             $paymentData['notificationURL'] = $notifyUrl;
         }
 
-        $paymentData = array_merge(
+        return array_merge(
+            $defaultParams,
             $customerData,
             $addressData,
             $paymentData,
             $splitData,
             $aditionalPaymentData
         );
-
-        return $paymentData;
     }
 
     /**

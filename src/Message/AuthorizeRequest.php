@@ -42,12 +42,4 @@ class AuthorizeRequest extends AbstractRequest
     {
         return parent::getEndpoint() . '/authorise';
     }
-
-    /**
-     * @return array
-     */
-    public function getDefaultParameters()
-    {
-        return [];
-    }
 }

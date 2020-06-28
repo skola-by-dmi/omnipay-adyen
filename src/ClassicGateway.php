@@ -23,7 +23,7 @@ class ClassicGateway extends AbstractGateway
 {
     public function getName()
     {
-        return 'Classic Gateway';
+        return 'AdyenClassic';
     }
 
     /**
@@ -48,6 +48,24 @@ class ClassicGateway extends AbstractGateway
     public function setKey($value)
     {
         return $this->setParameter('key', $value);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMerchantAccount()
+    {
+        return $this->getParameter('merchantAccount');
+    }
+
+    /**
+     * Set the merchant account for the current transactions.
+     * @param $value
+     * @return \Omnipay\Adyen\ClassicGateway
+     */
+    public function setMerchantAccount($value)
+    {
+        return $this->setParameter('merchantAccount', $value);
     }
 
     /**

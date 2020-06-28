@@ -8,11 +8,19 @@ class CaptureRequest extends AbstractRequest
 {
     public function getData()
     {
-        $this->validate('merchantAccount', 'transactionId');
+        $this->validate('amount', 'currency', 'merchantAccount', 'transactionReference');
 
-        return [
+        /**
+         * The amount that needs to be captured. The currency must match the currency used in authorisation,
+         * the value must be smaller than or equal to the authorised amount.
+         */
+       return [
+            'modificationAmount' => [
+                'currency' => $this->getCurrency(),
+                'value' => $this->getAmountInteger(),
+            ],
             'merchantAccount' => $this->getMerchantAccount(),
-            'originalReference' => $this->getTransactionId(),
+            'originalReference' => $this->getTransactionReference(),
         ];
     }
 

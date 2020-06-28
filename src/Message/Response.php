@@ -16,7 +16,7 @@ class Response extends AbstractResponse
 {
 
     /**
-     * Possible resultCode values from Adyen docs:
+     * Possible resultCode values from Adyen docs (authorise request):
      *  AuthenticationFinished – The payment has been successfully authenticated with 3D Secure 2. Returned for 3D Secure 2 authentication-only transactions.
      *  Authorised – The payment was successfully authorised. This state serves as an indicator to proceed with the delivery of goods and services. This is a final state.
      *  Cancelled – Indicates the payment has been cancelled (either by the shopper or the merchant) before processing was completed. This is a final state.
@@ -28,15 +28,33 @@ class Response extends AbstractResponse
      *  Received – Indicates the payment has successfully been received by Adyen, and will be processed. This is the initial state for all payments.
      *  RedirectShopper – Indicates the shopper should be redirected to an external web page or app to complete the authorisation.
      *  Refused – Indicates the payment was refused. The reason is given in the refusalReason field. This is a final state.
+     *
+     * In the case of a /capture request the response has a different way to parse.
+     * {    "pspReference": "852593379043958E",    "response": "[capture-received]"    }
      * @return bool
      */
     public function isSuccessful()
     {
-        if (!isset($this->data['resultCode'])) {
+        // Has error?
+        if (isset($this->data['errorCode']) && !empty($this->data['errorCode'])) {
             return false;
         }
 
-        return $this->data['resultCode'] == "Authorised" || $this->data['resultCode'] == "Received";
+        // authorize response
+        if (isset($this->data['resultCode'])) {
+            return $this->data['resultCode'] == "Authorised" ||
+                $this->data['resultCode'] == "Received" ||
+                $this->data['resultCode'] == "PresentToShopper" ||
+                $this->data['resultCode'] == "RedirectShopper" ||
+                $this->data['resultCode'] == "AuthenticationFinished";
+        }
+
+        // capture response
+        if (isset($this->data['response']) && $this->data['response'] == "[capture-received]") {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -66,6 +84,7 @@ class Response extends AbstractResponse
 
         return $this->data['pspReference'];
     }
+
     /**
      * Get the transaction id.
      *
@@ -87,5 +106,49 @@ class Response extends AbstractResponse
         }
 
         return $this->data['message'];
+    }
+
+    public function getPaymentData()
+    {
+        return $this->getData();
+    }
+
+    public function getRiskAnalysis()
+    {
+        if (!isset($this->data['fraudResult'])) {
+            return null;
+        }
+
+        return $this->data['fraudResult'];
+    }
+
+    public function getTransactionStatus()
+    {
+        // the authorize status
+        if (isset($this->data['resultCode'])) {
+            return $this->data['resultCode'];
+        }
+
+        // the capture status
+        if (isset($this->data['response'])) {
+            return $this->data['response'];
+        }
+
+        return null;
+    }
+
+    public function getPaymentStatus()
+    {
+        // the authorize status
+        if (isset($this->data['resultCode'])) {
+            return $this->data['resultCode'];
+        }
+
+        // the capture status
+        if (isset($this->data['response'])) {
+            return $this->data['response'];
+        }
+
+        return null;
     }
 }
