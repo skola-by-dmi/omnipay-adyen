@@ -9,7 +9,7 @@ use Omnipay\Common\Message\AbstractRequest as BaseAbstractRequest;
  */
 abstract class AbstractRequest extends BaseAbstractRequest
 {
-    protected $liveEndpoint = 'https://[random]-[company name]-checkout-live.adyenpayments.com/checkout/[version]';
+    protected $liveEndpoint = 'https://%s-pal-live.adyenpayments.com/pal/servlet/Payment/v52';
     protected $testEndpoint = 'https://pal-test.adyen.com/pal/servlet/Payment/v52';
 
     /**
@@ -37,13 +37,34 @@ abstract class AbstractRequest extends BaseAbstractRequest
     }
 
     /**
+     * Get the gateway Live URL Prefix.
+     *
+     * @return string
+     */
+    public function getLiveUrlPrefix()
+    {
+        return $this->getParameter('liveUrlPrefix');
+    }
+
+    /**
+     * Set Gateway Live Url Prefix
+     *
+     * @param  string $value
+     * @return AbstractRequest provides a fluent interface.
+     */
+    public function setLiveUrlPrefix($value)
+    {
+        return $this->setParameter('liveUrlPrefix', $value);
+    }
+
+    /**
      * Get the endpoint where the request should be made.
      *
      * @return string the URL of the endpoint
      */
     public function getEndpoint()
     {
-        return $this->getTestMode() ? $this->testEndpoint : $this->liveEndpoint;
+        return $this->getTestMode() ? $this->testEndpoint : sprintf($this->liveEndpoint, $this->getLiveUrlPrefix());
     }
 
     /**

@@ -51,6 +51,37 @@ class ClassicGateway extends AbstractGateway
     }
 
     /**
+     * Get the gateway Live URL Prefix.
+     *
+     * This prefix is the combination of the [random] and [company name] from the live endpoint.
+     *
+     * For example, if this was your live URL:
+     * https://1797a841fbb37ca7-AdyenDemo-checkout-live.adyenpayments.com/checkout/v32/payments
+     *
+     * Then the live URL prefix would be
+     * 1797a841fbb37ca7-AdyenDemo
+     *
+     * @see https://docs.adyen.com/development-resources/live-endpoints#live-url-prefix
+     *
+     * @return string
+     */
+    public function getLiveUrlPrefix()
+    {
+        return $this->getParameter('liveUrlPrefix');
+    }
+
+    /**
+     * Set Gateway Live Url Prefix
+     *
+     * @param  string $value
+     * @return \Omnipay\Adyen\ClassicGateway provides a fluent interface.
+     */
+    public function setLiveUrlPrefix($value)
+    {
+        return $this->setParameter('liveUrlPrefix', $value);
+    }
+
+    /**
      * @return mixed
      */
     public function getMerchantAccount()
