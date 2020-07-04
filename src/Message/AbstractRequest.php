@@ -9,8 +9,10 @@ use Omnipay\Common\Message\AbstractRequest as BaseAbstractRequest;
  */
 abstract class AbstractRequest extends BaseAbstractRequest
 {
-    protected $liveEndpoint = 'https://%s-pal-live.adyenpayments.com/pal/servlet/Payment/v52';
-    protected $testEndpoint = 'https://pal-test.adyen.com/pal/servlet/Payment/v52';
+    protected $livePaymentsEndpoint = 'https://%s-pal-live.adyenpayments.com/pal/servlet/Payment/v52';
+    protected $testPaymentsEndpoint = 'https://pal-test.adyen.com/pal/servlet/Payment/v52';
+    protected $liveCheckoutEndpoint = 'https://%s-checkout-live.adyenpayments.com/checkout/v52';
+    protected $testCheckoutEndpoint = 'https://checkout-test.adyen.com/v52';
 
     /**
      * Get the gateway  Key.
@@ -64,7 +66,15 @@ abstract class AbstractRequest extends BaseAbstractRequest
      */
     public function getEndpoint()
     {
-        return $this->getTestMode() ? $this->testEndpoint : sprintf($this->liveEndpoint, $this->getLiveUrlPrefix());
+        // The Adyen's API provides different endpoints
+        // for payments (Checkout API and Payments API).
+        // Currently, the boleto is only available on
+        // Checkout API.
+        if ($this->getPaymentMethod() === 'boleto' && $this instanceof AuthorizeRequest) {
+            return $this->getTestMode() ? $this->testCheckoutEndpoint : sprintf($this->liveCheckoutEndpoint, $this->getLiveUrlPrefix());
+        }
+
+        return $this->getTestMode() ? $this->testPaymentsEndpoint : sprintf($this->livePaymentsEndpoint, $this->getLiveUrlPrefix());
     }
 
     /**
@@ -229,6 +239,28 @@ abstract class AbstractRequest extends BaseAbstractRequest
     }
 
     /**
+     * A note about the payment.
+     *
+     * @return string
+     */
+    public function getNote()
+    {
+        return $this->getParameter('note');
+    }
+
+    /**
+     * Set a note about the payment. The value of this parameter
+     * will be shown along with payment details.
+     *
+     * @param  string $value
+     * @return AbstractRequest
+     */
+    public function setNote($value)
+    {
+        return $this->setParameter('note', $value);
+    }
+
+    /**
      * Get the base data.
      *
      * Because the Adyen gateway requires a common of fields for every request
@@ -318,11 +350,32 @@ abstract class AbstractRequest extends BaseAbstractRequest
      */
     public function getBoletoData()
     {
-        $this->validate('boletoDueDate');
+        $this->validate('card', 'transactionId', 'boletoDueDate');
+        $card    = $this->getCard();
 
-        $data                  = array();
-        $data['due_date'] = $this->getBoletoDueDate();
-        return $data;
+        $defaultParams = $this->getDefaultParameters();
+        $data['reference'] = $this->getTransactionId();
+        $data['shopperName'] = [
+            'firstName' => $card->getFirstName(),
+            'lastName' => $card->getLastName(),
+        ];
+        $data['shopperEmail']    = $card->getEmail();
+        $data['socialSecurityNumber'] = $this->getDocumentNumber();
+        $address = array_map('trim', explode(',', $card->getAddress1()));
+        $data['billingAddress']['street']            = $address[0];
+        $data['billingAddress']['houseNumberOrName'] = isset($address[1]) ? $address[1] : '';
+        $data['billingAddress']['stateOrProvince']   = $card->getState();
+        $data['billingAddress']['city']              = $card->getCity();
+        $data['billingAddress']['country']           = $card->getCountry();
+        $data['billingAddress']['postalCode']        = $this->onlyDigits($card->getPostcode());
+
+        $data['paymentMethod'] = ['type' => 'boletobancario_santander'];
+        if ($paymentNote = $this->getNote()) {
+            $data['shopperStatement'] = $paymentNote;
+        }
+        $data['deliveryDate'] = $this->getBoletoDueDate('Y-m-d\TH:i:s\Z');
+
+        return array_merge($data, $defaultParams);
     }
 
     /**
@@ -345,7 +398,7 @@ abstract class AbstractRequest extends BaseAbstractRequest
         $data['billingAddress']['houseNumberOrName'] = isset($address[1]) ? $address[1] : '';
         $data['billingAddress']['city']              = $card->getCity();
         $data['billingAddress']['country']           = $card->getCountry();
-        $data['billingAddress']['postalCode']        = $card->getPostcode();
+        $data['billingAddress']['postalCode']        = $this->onlyDigits($card->getPostcode());
 
         return $data;
     }
@@ -424,5 +477,10 @@ abstract class AbstractRequest extends BaseAbstractRequest
     public function setInstallments($value)
     {
         return $this->setParameter('installments', (int) $value);
+    }
+
+    private function onlyDigits($value)
+    {
+        return preg_replace("/[^0-9]/","", $value);
     }
 }

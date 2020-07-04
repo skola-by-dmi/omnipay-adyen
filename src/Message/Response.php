@@ -134,6 +134,11 @@ class Response extends AbstractResponse
             return $this->data['response'];
         }
 
+        // When the Adyen's API returns an error response
+        if (isset($this->data['errorType'])) {
+            return $this->data['errorType'];
+        }
+
         return null;
     }
 
@@ -150,5 +155,35 @@ class Response extends AbstractResponse
         }
 
         return null;
+    }
+
+    /**
+     * Get the boleto_url, boleto_barcode and boleto_expiration_date in the
+     * transaction object.
+     *
+     * @return array|null the boleto_url, boleto_barcode and boleto_expiration_date
+     */
+    public function getBoleto()
+    {
+        $data = null;
+
+        if (isset($this->data['outputDetails']['boletobancario.url'])) {
+            $data = [
+                'boleto_url'             => $this->data['outputDetails']['boletobancario.url'],
+                'boleto_barcode'         => $this->data['outputDetails']['boletobancario.barCodeReference'],
+                'boleto_expiration_date' => $this->data['outputDetails']['boletobancario.expirationDate'],
+            ];
+        }
+
+        return $data;
+    }
+
+    public function getOutputDetails()
+    {
+        if (!isset($this->data['outputDetails'])) {
+            return null;
+        }
+
+        return $this->data['outputDetails'];
     }
 }

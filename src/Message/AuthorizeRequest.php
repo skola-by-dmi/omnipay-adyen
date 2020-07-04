@@ -26,10 +26,10 @@ class AuthorizeRequest extends AbstractRequest
                 $paymentData = $this->getPaymentData($this->getCardData());
                 break;
             case 'boleto':
-                throw new Exception('The boleto payment method was not implemented yet.');
+                $paymentData = $this->getBoletoData();
                 break;
             default:
-                throw new Exception('Payment method not supported');
+                throw new Exception(sprintf("The Payment method '%s' is not supported on this omnipay driver.", $this->getPaymentMethod()));
                 break;
         }
 
@@ -40,6 +40,10 @@ class AuthorizeRequest extends AbstractRequest
 
     public function getEndpoint()
     {
+        if ($this->getPaymentMethod() === 'boleto' && $this instanceof AuthorizeRequest) {
+            return parent::getEndpoint() . '/payments';
+        }
+
         return parent::getEndpoint() . '/authorise';
     }
 }
